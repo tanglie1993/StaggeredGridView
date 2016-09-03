@@ -16,6 +16,8 @@ import android.widget.ListAdapter;
 
 public class MainActivity extends AppCompatActivity {
 
+    MyStaggeredGridView staggeredGridView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -32,11 +34,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        StaggeredGridView staggeredGridView = (StaggeredGridView) findViewById(R.id.staggeredGridView1);
-        String[] strs = new String[100];
-        for(int i = 0; i < strs.length; i++){
-            strs[i] = ""+i;
-        }
+        staggeredGridView = (MyStaggeredGridView) findViewById(R.id.staggeredGridView1);
+
+    }
+
+    @Override
+    public void onStart(){
+        super.onStart();
         final ListAdapter adapter = new ImageAdapter(this);
         staggeredGridView.setAdapter(adapter);
     }

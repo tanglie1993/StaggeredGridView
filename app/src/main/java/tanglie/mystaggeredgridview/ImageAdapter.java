@@ -34,9 +34,11 @@ public class ImageAdapter extends BaseAdapter {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        convertView = inflator.inflate(R.layout.item_layout, parent, false);
+        convertView = inflator.inflate(R.layout.item_layout, null);
         ImageView imageView = (ImageView) convertView.findViewById(R.id.imageView);
         imageView.setBackgroundResource(R.drawable.aa);
+        convertView.setDrawingCacheEnabled(true);
+        convertView.getDrawingCache();
         return convertView;
     }
 }

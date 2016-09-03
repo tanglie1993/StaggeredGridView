@@ -11,7 +11,7 @@
     tools:context="tanglie.mystaggeredgridview.MainActivity"
     tools:showIn="@layout/activity_main">
 
-    <tanglie.mystaggeredgridview.StaggeredGridView
+    <tanglie.mystaggeredgridview.MyStaggeredGridView
         android:id="@+id/staggeredGridView1"
         staggered:numColumns="2"
         staggered:drawSelectorOnTop="true"
