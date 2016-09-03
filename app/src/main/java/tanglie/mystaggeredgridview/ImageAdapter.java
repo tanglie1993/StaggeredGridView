@@ -37,8 +37,6 @@ public class ImageAdapter extends BaseAdapter {
         convertView = inflator.inflate(R.layout.item_layout, null);
         ImageView imageView = (ImageView) convertView.findViewById(R.id.imageView);
         imageView.setBackgroundResource(R.drawable.aa);
-        convertView.setDrawingCacheEnabled(true);
-        convertView.getDrawingCache();
         return convertView;
     }
 }
