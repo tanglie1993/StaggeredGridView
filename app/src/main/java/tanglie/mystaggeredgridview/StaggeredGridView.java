@@ -1449,8 +1449,8 @@ public class StaggeredGridView extends ViewGroup {
             final int childLeft = paddingLeft + nextCol * (colWidth + itemMargin);
             final int childRight = childLeft + child.getMeasuredWidth();
             child.layout(childLeft, childTop, childRight, childBottom);
-//
-//
+
+
             // add the position to the mapping
             Integer positionInt = Integer.valueOf(position);
             if(!mColMappings.get(nextCol).contains(positionInt)){
@@ -1468,20 +1468,19 @@ public class StaggeredGridView extends ViewGroup {
             for (int i = nextCol; i < nextCol + span; i++) {
                 mItemBottoms[i] = childBottom + rec.getMarginBelow(i - nextCol);
             }
-//
-//
-//            position++;
-//            nextCol = getNextColumnDown(position);
+
+
+            position++;
+            nextCol = getNextColumnDown(position);
         }
-//
-//        int lowestView = 0;
-//        for (int i = 0; i < mColCount; i++) {
-//            if (mItemBottoms[i] > lowestView) {
-//                lowestView = mItemBottoms[i];
-//            }
-//        }
-//        return lowestView - gridBottom;
-        return 0;
+
+        int lowestView = 0;
+        for (int i = 0; i < mColCount; i++) {
+            if (mItemBottoms[i] > lowestView) {
+                lowestView = mItemBottoms[i];
+            }
+        }
+        return lowestView - gridBottom;
     }
 
     /**
