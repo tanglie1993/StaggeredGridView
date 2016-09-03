@@ -39,22 +39,35 @@ public class MyStaggeredGridView extends LinearLayout {
     }
 
     @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        for(int i = 0; i < getChildCount(); i++){
+            View view = getChildAt(i);
+            final int widthSpec = MeasureSpec.makeMeasureSpec(200, MeasureSpec.EXACTLY);
+            final int heightSpec = MeasureSpec.makeMeasureSpec(200, MeasureSpec.EXACTLY);
+            view.measure(widthSpec, heightSpec);
+        }
+    }
+
+    @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        if(adapter != null){
-            for(int i = 0; i < adapter.getCount(); i++){
-                View view = adapter.getView(i, null, this);
-                final int widthSpec = MeasureSpec.makeMeasureSpec(200, MeasureSpec.EXACTLY);
-                final int heightSpec = MeasureSpec.makeMeasureSpec(200, MeasureSpec.EXACTLY);
-                view.measure(widthSpec, heightSpec);
-                view.layout(0,0,200,200);
-                addView(view);
-            }
+
+        for(int i = 0; i < getChildCount(); i++){
+            System.out.println("onLayout i: " + i);
+            View view = getChildAt(i);
+            view.layout(0, 200 * i, 200, 200 + 200 * i);
         }
         invalidate();
     }
 
     public void setAdapter(ListAdapter adapter) {
         this.adapter = adapter;
-        requestLayout();
+        removeAllViews();
+        if(adapter != null){
+            for(int i = 0; i < adapter.getCount(); i++){
+                View view = adapter.getView(i, null, this);
+                addView(view);
+            }
+        }
     }
 }
