@@ -51,13 +51,12 @@ public class MyStaggeredGridView extends LinearLayout {
         }
     }
 
-    private int cumulativeHeight = 0;
-
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
+        int cumulativeHeight = 0;
         for(int i = 0; i < getChildCount(); i++){
             View view = getChildAt(i);
-            view.layout(0, view.getMeasuredHeight() * i, view.getMeasuredWidth(), view.getMeasuredHeight() + view.getMeasuredHeight() * i);
+            view.layout(0, cumulativeHeight, view.getMeasuredWidth(), view.getMeasuredHeight() + cumulativeHeight);
             cumulativeHeight += view.getMeasuredHeight();
         }
         invalidate();
@@ -66,7 +65,6 @@ public class MyStaggeredGridView extends LinearLayout {
     public void setAdapter(ListAdapter adapter) {
         this.adapter = adapter;
         removeAllViews();
-        cumulativeHeight = 0;
         if(adapter != null){
             for(int i = 0; i < adapter.getCount(); i++){
                 View view = adapter.getView(i, null, this);
