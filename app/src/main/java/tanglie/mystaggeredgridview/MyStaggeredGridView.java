@@ -43,15 +43,15 @@ public class MyStaggeredGridView extends LinearLayout {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         for(int i = 0; i < getChildCount(); i++){
             View view = getChildAt(i);
-            final int widthSpec = MeasureSpec.makeMeasureSpec(200, MeasureSpec.EXACTLY);
-            final int heightSpec = MeasureSpec.makeMeasureSpec(200, MeasureSpec.EXACTLY);
-            view.measure(widthSpec, heightSpec);
+            ViewGroup.LayoutParams params = view.getLayoutParams();
+            params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+            params.width = ViewGroup.LayoutParams.WRAP_CONTENT;
+            view.setLayoutParams(params);
         }
     }
 
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
-
         for(int i = 0; i < getChildCount(); i++){
             System.out.println("onLayout i: " + i);
             View view = getChildAt(i);
