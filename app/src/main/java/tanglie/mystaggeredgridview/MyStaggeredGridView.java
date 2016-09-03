@@ -18,7 +18,7 @@ import java.lang.Override;
 public class MyStaggeredGridView extends ViewGroup {
 
     private ListAdapter adapter;
-    private int columnCount = 5;
+    private int columnCount = 3;
     private int columnMaxWidth = 0;
     private int columnCurrentTop[] = new int[columnCount];
 
