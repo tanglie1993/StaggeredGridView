@@ -18,7 +18,9 @@ import java.lang.Override;
 public class MyStaggeredGridView extends ViewGroup {
 
     private ListAdapter adapter;
-    private int columnCount = 10;
+    private int columnCount = 5;
+    private int columnMaxWidth = 0;
+    private int columnCurrentTop[] = new int[columnCount];
 
     public MyStaggeredGridView(Context context) {
         super(context);
@@ -43,9 +45,8 @@ public class MyStaggeredGridView extends ViewGroup {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        int widthSpecSize = MeasureSpec.getSize(heightMeasureSpec);
-
-        int columnMaxWidth = widthSpecSize / columnCount;
+        int widthSpecSize = MeasureSpec.getSize(widthMeasureSpec);
+        columnMaxWidth = widthSpecSize / columnCount;
         for(int i = 0; i < getChildCount(); i++){
             View view = getChildAt(i);
             view.measure(0, 0);
@@ -54,19 +55,30 @@ public class MyStaggeredGridView extends ViewGroup {
                 int newWidthMeasureSpec = MeasureSpec.makeMeasureSpec(columnMaxWidth, MeasureSpec.EXACTLY);
                 int newHeightMeasureSpec = MeasureSpec.makeMeasureSpec((int) (scaleFactor * view.getMeasuredHeight()), MeasureSpec.EXACTLY);
                 view.measure(newWidthMeasureSpec, newHeightMeasureSpec);
+                System.out.println("0: " + view.getMeasuredWidth());
+                System.out.println("columnMaxWidth: " + columnMaxWidth);
             }
         }
     }
 
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        int cumulativeHeight = 0;
+        int indexInCurrentRow = 0;
         for(int i = 0; i < getChildCount(); i++){
             View view = getChildAt(i);
-            view.layout(0, cumulativeHeight, view.getMeasuredWidth(), view.getMeasuredHeight() + cumulativeHeight);
-            cumulativeHeight += view.getMeasuredHeight();
+            System.out.println("1: " + view.getMeasuredWidth());
+            if(indexInCurrentRow >= columnCount){
+                indexInCurrentRow = 0;
+            }
+            view.layout(indexInCurrentRow * columnMaxWidth, columnCurrentTop[indexInCurrentRow],
+                    indexInCurrentRow * columnMaxWidth + view.getMeasuredWidth(), view.getMeasuredHeight() + columnCurrentTop[indexInCurrentRow]);
+            columnCurrentTop[indexInCurrentRow] += view.getMeasuredHeight();
+            indexInCurrentRow++;
         }
         invalidate();
+        for(int i = 0; i < columnCurrentTop.length; i++){
+            columnCurrentTop[i] = 0;
+        }
     }
 
     public void setAdapter(ListAdapter adapter) {
