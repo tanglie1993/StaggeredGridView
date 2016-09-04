@@ -100,12 +100,8 @@ public class MyStaggeredGridView extends ViewGroup {
             int currentRowTop = columnCurrentTop[i];
             List<AdapterViewItem> visibleViewsInColumn = viewManager.getInScreenViewsInColumn(i);
             for(AdapterViewItem item : visibleViewsInColumn){
-                item.getView().measure(0, 0);
-                if(item.getView().getMeasuredWidth() > columnMaxWidth){
-                    scaleView(item.getView());
-                }
                 System.out.println("onLayout: " + currentRowTop + " " + item.getView().getMeasuredWidth());
-                item.getView().layout(0, currentRowTop, item.getView().getMeasuredWidth(), currentRowTop + item.getView().getMeasuredHeight());
+                item.getView().layout(i * columnMaxWidth, currentRowTop, i * columnMaxWidth + item.getView().getMeasuredWidth(), currentRowTop + item.getView().getMeasuredHeight());
                 currentRowTop += item.getView().getMeasuredHeight();
             }
             recycleViews(visibleViewsInColumn, i);

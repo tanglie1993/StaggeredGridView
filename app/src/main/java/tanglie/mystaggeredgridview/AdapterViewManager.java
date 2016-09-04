@@ -5,7 +5,9 @@ import android.widget.ListAdapter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Administrator on 2016/9/4 0004.
@@ -19,6 +21,8 @@ public class AdapterViewManager {
     private ListAdapter adapter;
     private int columnCount = 3;
     private int[] itemState;
+
+    private Map<Integer, View> tempMap = new HashMap<>();
 
     public void setAdapter(ListAdapter adapter) {
         this.adapter = adapter;
@@ -46,10 +50,7 @@ public class AdapterViewManager {
         int index = columnNumber;
         while(index < itemState.length){
             if(itemState[index] == IN_SCREEN){
-                AdapterViewItem item = new AdapterViewItem();
-                item.setView(adapter.getView(index, null, null));
-                item.setViewIndex(index);
-                result.add(item);
+                result.add(getItem(index));
             }
             index += columnCount;
         }
@@ -58,6 +59,7 @@ public class AdapterViewManager {
 
     public void onViewAdded(AdapterViewItem item) {
         itemState[item.getViewIndex()] = IN_SCREEN;
+        tempMap.put(item.getViewIndex(), item.getView());
     }
 
     public void onViewRemoved(AdapterViewItem item, boolean isFromAbove) {
@@ -91,7 +93,12 @@ public class AdapterViewManager {
 
     private AdapterViewItem getItem(int itemIndex) {
         AdapterViewItem item = new AdapterViewItem();
-        item.setView(adapter.getView(itemIndex, null, null));
+        View view = tempMap.get(itemIndex);
+        if(view != null){
+            item.setView(view);
+        }else{
+            item.setView(adapter.getView(itemIndex, null, null));
+        }
         item.setViewIndex(itemIndex);
         return item;
     }
