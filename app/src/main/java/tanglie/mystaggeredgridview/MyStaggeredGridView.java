@@ -1,14 +1,11 @@
 package tanglie.mystaggeredgridview;
 
 import android.content.Context;
-import android.icu.util.Measure;
 import android.util.AttributeSet;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ListAdapter;
-import android.widget.ListView;
 
 import java.lang.Override;
 
@@ -22,24 +19,23 @@ public class MyStaggeredGridView extends ViewGroup {
     private int columnMaxWidth = 0;
     private int columnCurrentTop[] = new int[columnCount];
 
+    private float lastMotionEventY;
+    private float currentTop;
+
     public MyStaggeredGridView(Context context) {
         super(context);
-//        setOrientation(VERTICAL);
     }
 
     public MyStaggeredGridView(Context context, AttributeSet attrs) {
         super(context, attrs);
-//        setOrientation(VERTICAL);
     }
 
     public MyStaggeredGridView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-//        setOrientation(VERTICAL);
     }
 
     public MyStaggeredGridView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
-//        setOrientation(VERTICAL);
     }
 
     @Override
@@ -55,8 +51,6 @@ public class MyStaggeredGridView extends ViewGroup {
                 int newWidthMeasureSpec = MeasureSpec.makeMeasureSpec(columnMaxWidth, MeasureSpec.EXACTLY);
                 int newHeightMeasureSpec = MeasureSpec.makeMeasureSpec((int) (scaleFactor * view.getMeasuredHeight()), MeasureSpec.EXACTLY);
                 view.measure(newWidthMeasureSpec, newHeightMeasureSpec);
-                System.out.println("0: " + view.getMeasuredWidth());
-                System.out.println("columnMaxWidth: " + columnMaxWidth);
             }
         }
     }
@@ -66,12 +60,19 @@ public class MyStaggeredGridView extends ViewGroup {
         int indexInCurrentRow = 0;
         for(int i = 0; i < getChildCount(); i++){
             View view = getChildAt(i);
-            System.out.println("1: " + view.getMeasuredWidth());
             if(indexInCurrentRow >= columnCount){
                 indexInCurrentRow = 0;
             }
-            view.layout(indexInCurrentRow * columnMaxWidth, columnCurrentTop[indexInCurrentRow],
-                    indexInCurrentRow * columnMaxWidth + view.getMeasuredWidth(), view.getMeasuredHeight() + columnCurrentTop[indexInCurrentRow]);
+            int bottom = Math.round(columnCurrentTop[indexInCurrentRow] - currentTop + view.getMeasuredHeight());
+            if(bottom >= 0){
+                view.layout(indexInCurrentRow * columnMaxWidth, bottom - view.getMeasuredHeight(),
+                        indexInCurrentRow * columnMaxWidth + view.getMeasuredWidth(), bottom);
+//                System.out.println("top: " + top + "currentTop: " + currentTop);
+            }else{
+                view.layout(indexInCurrentRow * columnMaxWidth, - view.getMeasuredHeight(),
+                        indexInCurrentRow * columnMaxWidth + view.getMeasuredWidth(), 0);
+            }
+
             columnCurrentTop[indexInCurrentRow] += view.getMeasuredHeight();
             indexInCurrentRow++;
         }
@@ -79,6 +80,36 @@ public class MyStaggeredGridView extends ViewGroup {
         for(int i = 0; i < columnCurrentTop.length; i++){
             columnCurrentTop[i] = 0;
         }
+    }
+
+    @Override
+    public boolean onInterceptTouchEvent(MotionEvent event) {
+        return true;
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        switch(event.getAction()){
+            case MotionEvent.ACTION_DOWN:
+                lastMotionEventY = event.getY();
+                break;
+            case MotionEvent.ACTION_MOVE:
+                float deltaY = event.getY() - lastMotionEventY;
+                if(currentTop + deltaY > 0){
+                    currentTop = currentTop + deltaY;
+                    scrollTo(currentTop + deltaY);
+                }
+                lastMotionEventY = event.getY();
+            case MotionEvent.ACTION_UP:
+                break;
+            case MotionEvent.ACTION_CANCEL:
+                break;
+        }
+        return true;
+    }
+
+    private void scrollTo(float Y) {
+        requestLayout();
     }
 
     public void setAdapter(ListAdapter adapter) {
