@@ -5,19 +5,24 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewManager;
+import android.widget.Adapter;
 import android.widget.ListAdapter;
 
 import java.lang.Override;
+import java.util.List;
 
 /**
  * Created by Administrator on 2016/9/3 0003.
  */
 public class MyStaggeredGridView extends ViewGroup {
 
-    private ListAdapter adapter;
-    private int columnCount = 3;
+    private AdapterViewManager viewManager = new AdapterViewManager();
     private int columnMaxWidth = 0;
-    private int columnCurrentBottom[] = new int[columnCount];
+    private int columnCurrentBottom[] = new int[viewManager.getColumnCount()];
+    private int columnCurrentTop[] = new int[viewManager.getColumnCount()];
+
+
 
     private float lastMotionEventY;
     private float currentTop;
@@ -42,44 +47,110 @@ public class MyStaggeredGridView extends ViewGroup {
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         int widthSpecSize = MeasureSpec.getSize(widthMeasureSpec);
-        columnMaxWidth = widthSpecSize / columnCount;
-        for(int i = 0; i < getChildCount(); i++){
-            View view = getChildAt(i);
-            view.measure(0, 0);
-            if(view.getMeasuredWidth() > columnMaxWidth){
-                float scaleFactor = (float) columnMaxWidth / (float) view.getMeasuredWidth();
-                int newWidthMeasureSpec = MeasureSpec.makeMeasureSpec(columnMaxWidth, MeasureSpec.EXACTLY);
-                int newHeightMeasureSpec = MeasureSpec.makeMeasureSpec((int) (scaleFactor * view.getMeasuredHeight()), MeasureSpec.EXACTLY);
-                view.measure(newWidthMeasureSpec, newHeightMeasureSpec);
+        columnMaxWidth = widthSpecSize / viewManager.getColumnCount();
+
+
+
+        int[] tempTop = new int[columnCurrentTop.length];
+        System.arraycopy(columnCurrentTop, 0, tempTop, 0, columnCurrentTop.length);
+        int[] tempBottom = new int[columnCurrentBottom.length];
+        System.arraycopy(columnCurrentBottom, 0, tempBottom, 0, columnCurrentBottom.length);
+        addNewAboveItems(tempTop);
+        addNewBelowItems(tempBottom);
+    }
+
+    private void addNewBelowItems(int[] tempBottom) {
+        for(int i = 0; i < viewManager.getColumnCount(); i++){
+            while(tempBottom[i] < currentTop + getMeasuredHeight()){
+                AdapterViewItem item = viewManager.getViewFromBelow(i);
+                if(item == null){
+                    break;
+                }
+                addView(item);
+                tempBottom[i] += item.getView().getMeasuredHeight();
             }
         }
     }
 
+    private void addNewAboveItems(int[] tempTop) {
+        for(int i = 0; i < viewManager.getColumnCount(); i++){
+            if(viewManager.hasItem(i)){
+                while(tempTop[i] > currentTop){
+                    AdapterViewItem item = viewManager.getViewFromAbove(i);
+                    if(item == null){
+                        break;
+                    }
+                    addView(item);
+                    tempTop[i] -= item.getView().getMeasuredHeight();
+                }
+            }
+        }
+    }
+
+    private void scaleView(View view) {
+        float scaleFactor = (float) columnMaxWidth / (float) view.getMeasuredWidth();
+        int newWidthMeasureSpec = MeasureSpec.makeMeasureSpec(columnMaxWidth, MeasureSpec.EXACTLY);
+        int newHeightMeasureSpec = MeasureSpec.makeMeasureSpec((int) (scaleFactor * view.getMeasuredHeight()), MeasureSpec.EXACTLY);
+        view.measure(newWidthMeasureSpec, newHeightMeasureSpec);
+    }
+
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        int indexInCurrentRow = 0;
-        for(int i = 0; i < columnCurrentBottom.length; i++){
-            columnCurrentBottom[i] = 0;
-        }
-        for(int i = 0; i < getChildCount(); i++){
-            View view = getChildAt(i);
-            if(indexInCurrentRow >= columnCount){
-                indexInCurrentRow = 0;
+        for(int i = 0; i < viewManager.getColumnCount(); i++){
+            int currentRowTop = columnCurrentTop[i];
+            List<AdapterViewItem> visibleViewsInColumn = viewManager.getInScreenViewsInColumn(i);
+            for(AdapterViewItem item : visibleViewsInColumn){
+                item.getView().measure(0, 0);
+                if(item.getView().getMeasuredWidth() > columnMaxWidth){
+                    scaleView(item.getView());
+                }
+                System.out.println("onLayout: " + currentRowTop + " " + item.getView().getMeasuredWidth());
+                item.getView().layout(0, currentRowTop, item.getView().getMeasuredWidth(), currentRowTop + item.getView().getMeasuredHeight());
+                currentRowTop += item.getView().getMeasuredHeight();
             }
-            int bottom = Math.round(columnCurrentBottom[indexInCurrentRow] - currentTop + view.getMeasuredHeight());
-            if(bottom >= 0){
-                view.layout(indexInCurrentRow * columnMaxWidth, bottom - view.getMeasuredHeight(),
-                        indexInCurrentRow * columnMaxWidth + view.getMeasuredWidth(), bottom);
-//                System.out.println("top: " + top + "currentTop: " + currentTop);
-            }else{
-                view.layout(indexInCurrentRow * columnMaxWidth, - view.getMeasuredHeight(),
-                        indexInCurrentRow * columnMaxWidth + view.getMeasuredWidth(), 0);
-            }
-
-            columnCurrentBottom[indexInCurrentRow] += view.getMeasuredHeight();
-            indexInCurrentRow++;
+            recycleViews(visibleViewsInColumn, i);
         }
         invalidate();
+
+    }
+
+    private void recycleViews(List<AdapterViewItem> visibleViewsInColumn, int columnNumber) {
+        for(int i = 0; i < visibleViewsInColumn.size(); i++){
+            AdapterViewItem item = visibleViewsInColumn.get(i);
+            if(columnCurrentTop[columnNumber] + item.getView().getMeasuredHeight() < currentTop){
+                removeView(item, true);
+                columnCurrentTop[columnNumber] += item.getView().getMeasuredHeight();
+            }
+        }
+        for(int i = visibleViewsInColumn.size() - 1; i >= 0; i--){
+            AdapterViewItem item = visibleViewsInColumn.get(i);
+            if(columnCurrentBottom[columnNumber] - item.getView().getMeasuredHeight() > currentTop + getMeasuredHeight()){
+                removeView(item, false);
+                columnCurrentBottom[columnNumber] -= item.getView().getMeasuredHeight();
+            }
+        }
+    }
+
+    private void addView(AdapterViewItem item){
+        System.out.println("addView");
+        if(item == null){
+            return;
+        }
+        item.getView().measure(0, 0);
+        if(item.getView().getMeasuredWidth() > columnMaxWidth){
+            scaleView(item.getView());
+        }
+        addView(item.getView());
+        viewManager.onViewAdded(item);
+    }
+
+    private void removeView(AdapterViewItem item, boolean isFromAbove){
+        System.out.println("removeView");
+        if(item == null){
+            return;
+        }
+        removeView(item.getView());
+        viewManager.onViewRemoved(item, isFromAbove);
     }
 
     @Override
@@ -129,13 +200,10 @@ public class MyStaggeredGridView extends ViewGroup {
     }
 
     public void setAdapter(ListAdapter adapter) {
-        this.adapter = adapter;
-        removeAllViews();
-        if(adapter != null){
-            for(int i = 0; i < adapter.getCount(); i++){
-                View view = adapter.getView(i, null, this);
-                addView(view);
-            }
+        if(adapter == null){
+            return;
         }
+        viewManager.setAdapter(adapter);
+        removeAllViews();
     }
 }
