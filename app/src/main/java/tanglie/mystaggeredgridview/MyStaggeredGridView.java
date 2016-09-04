@@ -95,9 +95,9 @@ public class MyStaggeredGridView extends ViewGroup {
                 break;
             case MotionEvent.ACTION_MOVE:
                 float deltaY = event.getY() - lastMotionEventY;
-                if(currentTop + deltaY > 0){
-                    currentTop = currentTop + deltaY;
-                    scrollTo(currentTop + deltaY);
+                if(currentTop - deltaY > 0){
+                    currentTop = currentTop - deltaY;
+                    scrollTo(currentTop - deltaY);
                 }
                 lastMotionEventY = event.getY();
             case MotionEvent.ACTION_UP:
