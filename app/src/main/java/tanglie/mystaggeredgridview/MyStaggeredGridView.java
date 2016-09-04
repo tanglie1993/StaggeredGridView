@@ -17,7 +17,7 @@ public class MyStaggeredGridView extends ViewGroup {
     private ListAdapter adapter;
     private int columnCount = 3;
     private int columnMaxWidth = 0;
-    private int columnCurrentTop[] = new int[columnCount];
+    private int columnCurrentBottom[] = new int[columnCount];
 
     private float lastMotionEventY;
     private float currentTop;
@@ -58,12 +58,15 @@ public class MyStaggeredGridView extends ViewGroup {
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         int indexInCurrentRow = 0;
+        for(int i = 0; i < columnCurrentBottom.length; i++){
+            columnCurrentBottom[i] = 0;
+        }
         for(int i = 0; i < getChildCount(); i++){
             View view = getChildAt(i);
             if(indexInCurrentRow >= columnCount){
                 indexInCurrentRow = 0;
             }
-            int bottom = Math.round(columnCurrentTop[indexInCurrentRow] - currentTop + view.getMeasuredHeight());
+            int bottom = Math.round(columnCurrentBottom[indexInCurrentRow] - currentTop + view.getMeasuredHeight());
             if(bottom >= 0){
                 view.layout(indexInCurrentRow * columnMaxWidth, bottom - view.getMeasuredHeight(),
                         indexInCurrentRow * columnMaxWidth + view.getMeasuredWidth(), bottom);
@@ -73,13 +76,10 @@ public class MyStaggeredGridView extends ViewGroup {
                         indexInCurrentRow * columnMaxWidth + view.getMeasuredWidth(), 0);
             }
 
-            columnCurrentTop[indexInCurrentRow] += view.getMeasuredHeight();
+            columnCurrentBottom[indexInCurrentRow] += view.getMeasuredHeight();
             indexInCurrentRow++;
         }
         invalidate();
-        for(int i = 0; i < columnCurrentTop.length; i++){
-            columnCurrentTop[i] = 0;
-        }
     }
 
     @Override
@@ -94,8 +94,8 @@ public class MyStaggeredGridView extends ViewGroup {
                 lastMotionEventY = event.getY();
                 break;
             case MotionEvent.ACTION_MOVE:
-                float deltaY = event.getY() - lastMotionEventY;
-                if(currentTop - deltaY > 0){
+                if(!willExceedTop(event.getY()) && !willExceedBottom(event.getY())){
+                    float deltaY = event.getY() - lastMotionEventY;
                     currentTop = currentTop - deltaY;
                     scrollTo(currentTop - deltaY);
                 }
@@ -106,6 +106,22 @@ public class MyStaggeredGridView extends ViewGroup {
                 break;
         }
         return true;
+    }
+
+    private boolean willExceedBottom(float motionEventY) {
+        float bottom = 0;
+        for(int i = 0; i < columnCurrentBottom.length; i++){
+            if(columnCurrentBottom[i] > bottom){
+                bottom = columnCurrentBottom[i];
+            }
+        }
+        float deltaY = motionEventY - lastMotionEventY;
+        return currentTop - deltaY + getMeasuredHeight() > bottom;
+    }
+
+    private boolean willExceedTop(float motionEventY) {
+        float deltaY = motionEventY - lastMotionEventY;
+        return currentTop - deltaY < 0;
     }
 
     private void scrollTo(float Y) {
