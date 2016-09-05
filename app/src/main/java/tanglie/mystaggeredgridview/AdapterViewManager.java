@@ -58,11 +58,17 @@ public class AdapterViewManager {
     }
 
     public void onViewAdded(AdapterViewItem item) {
+        if(item.getViewIndex() % columnCount == 0){
+            System.out.println("onViewAdded " + item.getViewIndex());
+        }
         itemState[item.getViewIndex()] = IN_SCREEN;
         tempMap.put(item.getViewIndex(), item.getView());
     }
 
     public void onViewRemoved(AdapterViewItem item, boolean isFromAbove) {
+        if(item.getViewIndex() % columnCount == 0){
+            System.out.println("onViewRemoved " + item.getViewIndex() + " " +isFromAbove);
+        }
         if(isFromAbove){
             itemState[item.getViewIndex()] = ABOVE_SCREEN;
         }else{
@@ -74,7 +80,7 @@ public class AdapterViewManager {
     public AdapterViewItem getViewFromAbove(int columnNumber) {
         for(int i = columnNumber; i < itemState.length; i+= columnCount){
             if(itemState[i] == ABOVE_SCREEN){
-                if(i + columnCount >= itemState.length || itemState[i + columnCount] != IN_SCREEN){
+                if(i + columnCount >= itemState.length || itemState[i + columnCount] != ABOVE_SCREEN){
                     return getItem(i);
                 }
             }

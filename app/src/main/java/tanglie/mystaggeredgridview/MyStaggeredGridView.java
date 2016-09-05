@@ -1,12 +1,14 @@
 package tanglie.mystaggeredgridview;
 
 import android.content.Context;
+import android.media.Image;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewManager;
 import android.widget.Adapter;
+import android.widget.ImageView;
 import android.widget.ListAdapter;
 
 import java.lang.Override;
@@ -27,6 +29,9 @@ public class MyStaggeredGridView extends ViewGroup {
     private float lastMotionEventY;
     private float currentTop;
 
+    private boolean hasMeasured;
+    private boolean hasLayouted;
+
     public MyStaggeredGridView(Context context) {
         super(context);
     }
@@ -46,17 +51,17 @@ public class MyStaggeredGridView extends ViewGroup {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        if(hasMeasured){
+            return;
+        }
         int widthSpecSize = MeasureSpec.getSize(widthMeasureSpec);
         columnMaxWidth = widthSpecSize / viewManager.getColumnCount();
-
-
-
-        int[] tempTop = new int[columnCurrentTop.length];
-        System.arraycopy(columnCurrentTop, 0, tempTop, 0, columnCurrentTop.length);
         int[] tempBottom = new int[columnCurrentBottom.length];
         System.arraycopy(columnCurrentBottom, 0, tempBottom, 0, columnCurrentBottom.length);
-        addNewAboveItems(tempTop);
+        addNewAboveItems();
         addNewBelowItems(tempBottom);
+        hasMeasured = true;
+        hasLayouted = false;
     }
 
     private void addNewBelowItems(int[] tempBottom) {
@@ -72,16 +77,16 @@ public class MyStaggeredGridView extends ViewGroup {
         }
     }
 
-    private void addNewAboveItems(int[] tempTop) {
+    private void addNewAboveItems() {
         for(int i = 0; i < viewManager.getColumnCount(); i++){
             if(viewManager.hasItem(i)){
-                while(tempTop[i] > currentTop){
+                while(columnCurrentTop[i] > currentTop){
                     AdapterViewItem item = viewManager.getViewFromAbove(i);
                     if(item == null){
                         break;
                     }
                     addView(item);
-                    tempTop[i] -= item.getView().getMeasuredHeight();
+                    columnCurrentTop[i] -= item.getView().getMeasuredHeight();
                 }
             }
         }
@@ -96,18 +101,23 @@ public class MyStaggeredGridView extends ViewGroup {
 
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
+        if(hasLayouted){
+            return;
+        }
         for(int i = 0; i < viewManager.getColumnCount(); i++){
-            int currentRowTop = columnCurrentTop[i];
+            columnCurrentBottom[i] = columnCurrentTop[i];
+
             List<AdapterViewItem> visibleViewsInColumn = viewManager.getInScreenViewsInColumn(i);
             for(AdapterViewItem item : visibleViewsInColumn){
-                System.out.println("onLayout: " + currentRowTop + " " + item.getView().getMeasuredWidth());
-                item.getView().layout(i * columnMaxWidth, currentRowTop, i * columnMaxWidth + item.getView().getMeasuredWidth(), currentRowTop + item.getView().getMeasuredHeight());
-                currentRowTop += item.getView().getMeasuredHeight();
+                item.getView().layout(i * columnMaxWidth, columnCurrentBottom[i] - (int) currentTop,
+                        i * columnMaxWidth + item.getView().getMeasuredWidth(), columnCurrentBottom[i] + item.getView().getMeasuredHeight() - (int) currentTop);
+                columnCurrentBottom[i] += item.getView().getMeasuredHeight();
             }
             recycleViews(visibleViewsInColumn, i);
         }
         invalidate();
-
+        hasMeasured = false;
+        hasLayouted = true;
     }
 
     private void recycleViews(List<AdapterViewItem> visibleViewsInColumn, int columnNumber) {
@@ -116,6 +126,8 @@ public class MyStaggeredGridView extends ViewGroup {
             if(columnCurrentTop[columnNumber] + item.getView().getMeasuredHeight() < currentTop){
                 removeView(item, true);
                 columnCurrentTop[columnNumber] += item.getView().getMeasuredHeight();
+            }else{
+                break;
             }
         }
         for(int i = visibleViewsInColumn.size() - 1; i >= 0; i--){
@@ -123,12 +135,13 @@ public class MyStaggeredGridView extends ViewGroup {
             if(columnCurrentBottom[columnNumber] - item.getView().getMeasuredHeight() > currentTop + getMeasuredHeight()){
                 removeView(item, false);
                 columnCurrentBottom[columnNumber] -= item.getView().getMeasuredHeight();
+            }else{
+                break;
             }
         }
     }
 
     private void addView(AdapterViewItem item){
-        System.out.println("addView");
         if(item == null){
             return;
         }
@@ -141,7 +154,6 @@ public class MyStaggeredGridView extends ViewGroup {
     }
 
     private void removeView(AdapterViewItem item, boolean isFromAbove){
-        System.out.println("removeView");
         if(item == null){
             return;
         }
