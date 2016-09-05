@@ -20,7 +20,7 @@ import java.util.List;
 public class MyStaggeredGridView extends ViewGroup {
 
     private AdapterViewManager viewManager = new AdapterViewManager();
-    private int columnMaxWidth = 0;
+    
     private int columnCurrentBottom[] = new int[viewManager.getColumnCount()];
     private int columnCurrentTop[] = new int[viewManager.getColumnCount()];
 
@@ -55,7 +55,7 @@ public class MyStaggeredGridView extends ViewGroup {
             return;
         }
         int widthSpecSize = MeasureSpec.getSize(widthMeasureSpec);
-        columnMaxWidth = widthSpecSize / viewManager.getColumnCount();
+        viewManager.setColumnMaxWidth(widthSpecSize / viewManager.getColumnCount());
         int[] tempBottom = new int[columnCurrentBottom.length];
         System.arraycopy(columnCurrentBottom, 0, tempBottom, 0, columnCurrentBottom.length);
         addNewAboveItems();
@@ -92,12 +92,7 @@ public class MyStaggeredGridView extends ViewGroup {
         }
     }
 
-    private void scaleView(View view) {
-        float scaleFactor = (float) columnMaxWidth / (float) view.getMeasuredWidth();
-        int newWidthMeasureSpec = MeasureSpec.makeMeasureSpec(columnMaxWidth, MeasureSpec.EXACTLY);
-        int newHeightMeasureSpec = MeasureSpec.makeMeasureSpec((int) (scaleFactor * view.getMeasuredHeight()), MeasureSpec.EXACTLY);
-        view.measure(newWidthMeasureSpec, newHeightMeasureSpec);
-    }
+    
 
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
@@ -109,8 +104,8 @@ public class MyStaggeredGridView extends ViewGroup {
 
             List<AdapterViewItem> visibleViewsInColumn = viewManager.getInScreenViewsInColumn(i);
             for(AdapterViewItem item : visibleViewsInColumn){
-                item.getView().layout(i * columnMaxWidth, columnCurrentBottom[i] - (int) currentTop,
-                        i * columnMaxWidth + item.getView().getMeasuredWidth(), columnCurrentBottom[i] + item.getView().getMeasuredHeight() - (int) currentTop);
+                item.getView().layout(i * viewManager.getColumnMaxWidth(), columnCurrentBottom[i] - (int) currentTop,
+                        i * viewManager.getColumnMaxWidth() + item.getView().getMeasuredWidth(), columnCurrentBottom[i] + item.getView().getMeasuredHeight() - (int) currentTop);
                 columnCurrentBottom[i] += item.getView().getMeasuredHeight();
             }
             recycleViews(visibleViewsInColumn, i);
@@ -144,10 +139,6 @@ public class MyStaggeredGridView extends ViewGroup {
     private void addView(AdapterViewItem item){
         if(item == null){
             return;
-        }
-        item.getView().measure(0, 0);
-        if(item.getView().getMeasuredWidth() > columnMaxWidth){
-            scaleView(item.getView());
         }
         addView(item.getView());
         viewManager.onViewAdded(item);
@@ -188,14 +179,13 @@ public class MyStaggeredGridView extends ViewGroup {
     }
 
     private boolean willExceedBottom(float motionEventY) {
-        float bottom = 0;
-        for(int i = 0; i < columnCurrentBottom.length; i++){
-            if(columnCurrentBottom[i] > bottom){
-                bottom = columnCurrentBottom[i];
-            }
-        }
+        float[] exceedAmount = new float[viewManager.getColumnCount()];
         float deltaY = motionEventY - lastMotionEventY;
-        return currentTop - deltaY + getMeasuredHeight() > bottom;
+        for(int i = 0; i < columnCurrentBottom.length; i++){
+            exceedAmount[i] = currentTop - deltaY + getMeasuredHeight() - columnCurrentBottom[i];
+        }
+
+        return viewManager.willExceedBottom(exceedAmount);
     }
 
     private boolean willExceedTop(float motionEventY) {

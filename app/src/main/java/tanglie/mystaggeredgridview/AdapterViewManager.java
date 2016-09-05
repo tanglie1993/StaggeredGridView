@@ -22,6 +22,8 @@ public class AdapterViewManager {
     private int columnCount = 3;
     private int[] itemState;
 
+    private int columnMaxWidth = 0;
+
     private Map<Integer, View> tempMap = new HashMap<>();
 
     public void setAdapter(ListAdapter adapter) {
@@ -103,11 +105,44 @@ public class AdapterViewManager {
         if(view != null){
             item.setView(view);
         }else{
-            item.setView(adapter.getView(itemIndex, null, null));
+            view = adapter.getView(itemIndex, null, null);
+            view.measure(0, 0);
+            if(view.getMeasuredWidth() > columnMaxWidth){
+                scaleView(view);
+            }
+            item.setView(view);
         }
         item.setViewIndex(itemIndex);
         return item;
     }
 
+    private void scaleView(View view) {
+        float scaleFactor = (float) columnMaxWidth / (float) view.getMeasuredWidth();
+        int newWidthMeasureSpec = View.MeasureSpec.makeMeasureSpec(columnMaxWidth, View.MeasureSpec.EXACTLY);
+        int newHeightMeasureSpec = View.MeasureSpec.makeMeasureSpec((int) (scaleFactor * view.getMeasuredHeight()), View.MeasureSpec.EXACTLY);
+        view.measure(newWidthMeasureSpec, newHeightMeasureSpec);
+    }
 
+    public boolean willExceedBottom(float[] exceedAmount) {
+        for(int i = 0; i < exceedAmount.length; i++){
+            if(exceedAmount[i] > 0){
+                AdapterViewItem item = getViewFromBelow(i);
+                if(item == null){
+                    return true;
+                }
+                if(item.getView().getMeasuredHeight() < exceedAmount[i]){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public int getColumnMaxWidth() {
+        return columnMaxWidth;
+    }
+
+    public void setColumnMaxWidth(int columnMaxWidth) {
+        this.columnMaxWidth = columnMaxWidth;
+    }
 }
