@@ -7,6 +7,7 @@ import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
 import android.widget.ListAdapter;
 
@@ -184,7 +185,7 @@ public class MyStaggeredGridView extends ViewGroup {
                 if(!willExceedTop(event.getY()) && !willExceedBottom(event.getY())){
                     float deltaY = event.getY() - lastMotionEventY;
                     currentTop = currentTop - deltaY;
-                    System.out.println("currentTop: " + currentTop);
+                    
                     requestLayout();
                 }
                 lastMotionEventY = event.getY();
@@ -206,30 +207,17 @@ public class MyStaggeredGridView extends ViewGroup {
         final float startY = lastMotionEventY;
         scrollAnimator = ValueAnimator.ofFloat(0, 1);
         scrollAnimator.setDuration(1000);
-        scrollAnimator.setInterpolator(new Interpolator() {
-            @Override
-            public float getInterpolation(float input) {
-                return input;
-            }
-        });
+        scrollAnimator.setInterpolator(new DecelerateInterpolator());
         scrollAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 float targetY = (velocityY / 10) * (Float) animation.getAnimatedValue() + startY;
-                System.out.println("onAnimationUpdate targetY: " + targetY + " velocityY: " + velocityY + " animation.getAnimatedValue(): " + animation.getAnimatedValue());
-                if(willExceedTop(targetY)){
-                    System.out.println("willExceedTop");
-                    return;
+                if(!willExceedTop(targetY) && !willExceedBottom(targetY)){
+                    float deltaY = targetY - lastMotionEventY;
+                    currentTop = currentTop - deltaY;
+                    requestLayout();
+                    lastMotionEventY = targetY;
                 }
-                if(willExceedBottom(targetY)){
-                    System.out.println("willExceedBottom");
-                    return;
-                }
-                float deltaY = targetY - lastMotionEventY;
-                currentTop = currentTop - deltaY;
-                System.out.println("currentTop: " + currentTop + " targetY: " + targetY);
-                requestLayout();
-                lastMotionEventY = targetY;
             }
         });
         scrollAnimator.start();
