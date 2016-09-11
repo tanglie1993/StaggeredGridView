@@ -36,11 +36,11 @@ public class ImageAdapter extends BaseAdapter {
     public View getView(int position, View convertView, ViewGroup parent) {
         convertView = inflator.inflate(R.layout.item_layout, null);
         ImageView imageView = (ImageView) convertView.findViewById(R.id.imageView);
-//        if(Math.random() < 0.5){
+        if(Math.random() < 0.5){
             imageView.setImageResource(R.drawable.aa);
-//        }else{
-//            imageView.setImageResource(R.drawable.bb);
-//        }
+        }else{
+            imageView.setImageResource(R.drawable.bb);
+        }
 
         return convertView;
     }

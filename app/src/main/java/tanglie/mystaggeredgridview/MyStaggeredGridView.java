@@ -1,14 +1,10 @@
 package tanglie.mystaggeredgridview;
 
 import android.content.Context;
-import android.media.Image;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewManager;
-import android.widget.Adapter;
-import android.widget.ImageView;
 import android.widget.ListAdapter;
 
 import java.lang.Override;
@@ -19,12 +15,13 @@ import java.util.List;
  */
 public class MyStaggeredGridView extends ViewGroup {
 
-    private AdapterViewManager viewManager = new AdapterViewManager();
+    private AdapterViewManager viewManager = new AdapterViewManager(this);
     
     private int columnCurrentBottom[] = new int[viewManager.getColumnCount()];
     private int columnCurrentTop[] = new int[viewManager.getColumnCount()];
 
-
+    private View newTopViewConvertView[] = new View[viewManager.getColumnCount()];
+    private View newBottomViewConvertView[] = new View[viewManager.getColumnCount()];
 
     private float lastMotionEventY;
     private float currentTop;
@@ -67,7 +64,8 @@ public class MyStaggeredGridView extends ViewGroup {
     private void addNewBelowItems(int[] tempBottom) {
         for(int i = 0; i < viewManager.getColumnCount(); i++){
             while(tempBottom[i] < currentTop + getMeasuredHeight()){
-                AdapterViewItem item = viewManager.getViewFromBelow(i);
+                AdapterViewItem item = viewManager.getViewFromBelow(i, newBottomViewConvertView[i]);
+                newBottomViewConvertView[i] = null;
                 if(item == null){
                     break;
                 }
@@ -81,7 +79,8 @@ public class MyStaggeredGridView extends ViewGroup {
         for(int i = 0; i < viewManager.getColumnCount(); i++){
             if(viewManager.hasItem(i)){
                 while(columnCurrentTop[i] > currentTop){
-                    AdapterViewItem item = viewManager.getViewFromAbove(i);
+                    AdapterViewItem item = viewManager.getViewFromAbove(i, newTopViewConvertView[i]);
+                    newTopViewConvertView[i] = null;
                     if(item == null){
                         break;
                     }
@@ -121,6 +120,7 @@ public class MyStaggeredGridView extends ViewGroup {
             if(columnCurrentTop[columnNumber] + item.getView().getMeasuredHeight() < currentTop){
                 removeView(item, true);
                 columnCurrentTop[columnNumber] += item.getView().getMeasuredHeight();
+                newBottomViewConvertView[columnNumber] = item.getView();
             }else{
                 break;
             }
@@ -130,6 +130,7 @@ public class MyStaggeredGridView extends ViewGroup {
             if(columnCurrentBottom[columnNumber] - item.getView().getMeasuredHeight() > currentTop + getMeasuredHeight()){
                 removeView(item, false);
                 columnCurrentBottom[columnNumber] -= item.getView().getMeasuredHeight();
+                newTopViewConvertView[columnNumber] = item.getView();
             }else{
                 break;
             }
@@ -167,7 +168,7 @@ public class MyStaggeredGridView extends ViewGroup {
                 if(!willExceedTop(event.getY()) && !willExceedBottom(event.getY())){
                     float deltaY = event.getY() - lastMotionEventY;
                     currentTop = currentTop - deltaY;
-                    scrollTo(currentTop - deltaY);
+                    requestLayout();
                 }
                 lastMotionEventY = event.getY();
             case MotionEvent.ACTION_UP:
@@ -185,16 +186,12 @@ public class MyStaggeredGridView extends ViewGroup {
             exceedAmount[i] = currentTop - deltaY + getMeasuredHeight() - columnCurrentBottom[i];
         }
 
-        return viewManager.willExceedBottom(exceedAmount);
+        return viewManager.willExceedBottom(exceedAmount, newBottomViewConvertView);
     }
 
     private boolean willExceedTop(float motionEventY) {
         float deltaY = motionEventY - lastMotionEventY;
         return currentTop - deltaY < 0;
-    }
-
-    private void scrollTo(float Y) {
-        requestLayout();
     }
 
     public void setAdapter(ListAdapter adapter) {

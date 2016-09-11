@@ -1,6 +1,7 @@
 package tanglie.mystaggeredgridview;
 
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ListAdapter;
 
 import java.util.ArrayList;
@@ -24,7 +25,13 @@ public class AdapterViewManager {
 
     private int columnMaxWidth = 0;
 
-    private Map<Integer, View> tempMap = new HashMap<>();
+    private Map<Integer, View> inScreenViewMap = new HashMap<>();
+
+    private ViewGroup parent;
+
+    public AdapterViewManager(ViewGroup parent) {
+        this.parent = parent;
+    }
 
     public void setAdapter(ListAdapter adapter) {
         this.adapter = adapter;
@@ -52,7 +59,7 @@ public class AdapterViewManager {
         int index = columnNumber;
         while(index < itemState.length){
             if(itemState[index] == IN_SCREEN){
-                result.add(getItem(index));
+                result.add(getItem(index, null));
             }
             index += columnCount;
         }
@@ -64,7 +71,6 @@ public class AdapterViewManager {
             System.out.println("onViewAdded " + item.getViewIndex());
         }
         itemState[item.getViewIndex()] = IN_SCREEN;
-        tempMap.put(item.getViewIndex(), item.getView());
     }
 
     public void onViewRemoved(AdapterViewItem item, boolean isFromAbove) {
@@ -76,36 +82,37 @@ public class AdapterViewManager {
         }else{
             itemState[item.getViewIndex()] = BELOW_SCREEN;
         }
-
+        inScreenViewMap.remove(item.getViewIndex());
     }
 
-    public AdapterViewItem getViewFromAbove(int columnNumber) {
+    public AdapterViewItem getViewFromAbove(int columnNumber, View convertView) {
         for(int i = columnNumber; i < itemState.length; i+= columnCount){
             if(itemState[i] == ABOVE_SCREEN){
                 if(i + columnCount >= itemState.length || itemState[i + columnCount] != ABOVE_SCREEN){
-                    return getItem(i);
+                    return getItem(i, convertView);
                 }
             }
         }
         return null;
     }
 
-    public AdapterViewItem getViewFromBelow(int columnNumber) {
+    public AdapterViewItem getViewFromBelow(int columnNumber, View convertView) {
         for(int i = columnNumber; i < itemState.length; i+= columnCount){
             if(itemState[i] == BELOW_SCREEN){
-                return getItem(i);
+                return getItem(i, convertView);
             }
         }
         return null;
     }
 
-    private AdapterViewItem getItem(int itemIndex) {
+    private AdapterViewItem getItem(int itemIndex, View convertView) {
         AdapterViewItem item = new AdapterViewItem();
-        View view = tempMap.get(itemIndex);
+        View view = inScreenViewMap.get(itemIndex);
         if(view != null){
             item.setView(view);
         }else{
-            view = adapter.getView(itemIndex, null, null);
+            view = adapter.getView(itemIndex, convertView, parent);
+            inScreenViewMap.put(itemIndex, view);
             view.measure(0, 0);
             if(view.getMeasuredWidth() > columnMaxWidth){
                 scaleView(view);
@@ -123,10 +130,11 @@ public class AdapterViewManager {
         view.measure(newWidthMeasureSpec, newHeightMeasureSpec);
     }
 
-    public boolean willExceedBottom(float[] exceedAmount) {
+    public boolean willExceedBottom(float[] exceedAmount, View[] convertViews) {
         for(int i = 0; i < exceedAmount.length; i++){
             if(exceedAmount[i] > 0){
-                AdapterViewItem item = getViewFromBelow(i);
+                AdapterViewItem item = getViewFromBelow(i, convertViews[i]);
+                convertViews[i] = null;
                 if(item == null){
                     return true;
                 }
