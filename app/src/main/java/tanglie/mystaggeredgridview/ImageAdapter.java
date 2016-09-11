@@ -6,6 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 /**
  * Created by Administrator on 2016/9/3 0003.
@@ -19,7 +20,7 @@ public class ImageAdapter extends BaseAdapter {
     }
     @Override
     public int getCount() {
-        return 50;
+        return 5000;
     }
 
     @Override
@@ -35,12 +36,14 @@ public class ImageAdapter extends BaseAdapter {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         convertView = inflator.inflate(R.layout.item_layout, null);
-        ImageView imageView = (ImageView) convertView.findViewById(R.id.imageView);
-        if(position % 2 == 0){
-            imageView.setImageResource(R.drawable.aa);
-        }else{
-            imageView.setImageResource(R.drawable.bb);
-        }
+        TextView textView = (TextView) convertView.findViewById(R.id.textView);
+        textView.setText(""+position);
+//        ImageView imageView = (ImageView) convertView.findViewById(R.id.imageView);
+//        if(position % 2 == 0){
+//            imageView.setImageResource(R.drawable.aa);
+//        }else{
+//            imageView.setImageResource(R.drawable.bb);
+//        }
 
         return convertView;
     }

@@ -1,10 +1,13 @@
 package tanglie.mystaggeredgridview;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
+import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Interpolator;
 import android.widget.ListAdapter;
 
 import java.lang.Override;
@@ -14,6 +17,8 @@ import java.util.List;
  * Created by Administrator on 2016/9/3 0003.
  */
 public class MyStaggeredGridView extends ViewGroup {
+
+
 
     private AdapterViewManager viewManager = new AdapterViewManager(this);
     
@@ -28,6 +33,12 @@ public class MyStaggeredGridView extends ViewGroup {
 
     private boolean hasMeasured;
     private boolean hasLayouted;
+
+    private static final int PIXELS_PER_SECOND = 1000;
+    private static final int MAX_VELOCITY = 100000;
+    private VelocityTracker velocityTracker = VelocityTracker.obtain();
+    private int pointerId;
+    private ValueAnimator scrollAnimator;
 
     public MyStaggeredGridView(Context context) {
         super(context);
@@ -160,23 +171,68 @@ public class MyStaggeredGridView extends ViewGroup {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        velocityTracker.addMovement(event);
         switch(event.getAction()){
             case MotionEvent.ACTION_DOWN:
+                if(scrollAnimator != null){
+                    scrollAnimator.cancel();
+                }
                 lastMotionEventY = event.getY();
+                pointerId = event.getPointerId(0);
                 break;
             case MotionEvent.ACTION_MOVE:
                 if(!willExceedTop(event.getY()) && !willExceedBottom(event.getY())){
                     float deltaY = event.getY() - lastMotionEventY;
                     currentTop = currentTop - deltaY;
+                    System.out.println("currentTop: " + currentTop);
                     requestLayout();
                 }
                 lastMotionEventY = event.getY();
+                break;
             case MotionEvent.ACTION_UP:
+                velocityTracker.computeCurrentVelocity(PIXELS_PER_SECOND, MAX_VELOCITY);
+                final float velocityY = velocityTracker.getYVelocity(pointerId);
+                smoothScroll(velocityY);
+                velocityTracker.clear();
                 break;
             case MotionEvent.ACTION_CANCEL:
+                velocityTracker.clear();
                 break;
         }
         return true;
+    }
+
+    private void smoothScroll(final float velocityY) {
+        final float startY = lastMotionEventY;
+        scrollAnimator = ValueAnimator.ofFloat(0, 1);
+        scrollAnimator.setDuration(1000);
+        scrollAnimator.setInterpolator(new Interpolator() {
+            @Override
+            public float getInterpolation(float input) {
+                return input;
+            }
+        });
+        scrollAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float targetY = (velocityY / 10) * (Float) animation.getAnimatedValue() + startY;
+                System.out.println("onAnimationUpdate targetY: " + targetY + " velocityY: " + velocityY + " animation.getAnimatedValue(): " + animation.getAnimatedValue());
+                if(willExceedTop(targetY)){
+                    System.out.println("willExceedTop");
+                    return;
+                }
+                if(willExceedBottom(targetY)){
+                    System.out.println("willExceedBottom");
+                    return;
+                }
+                float deltaY = targetY - lastMotionEventY;
+                currentTop = currentTop - deltaY;
+                System.out.println("currentTop: " + currentTop + " targetY: " + targetY);
+                requestLayout();
+                lastMotionEventY = targetY;
+            }
+        });
+        scrollAnimator.start();
     }
 
     private boolean willExceedBottom(float motionEventY) {
