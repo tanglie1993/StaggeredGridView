@@ -67,16 +67,10 @@ public class AdapterViewManager {
     }
 
     public void onViewAdded(AdapterViewItem item) {
-        if(item.getViewIndex() % columnCount == 0){
-            System.out.println("onViewAdded " + item.getViewIndex());
-        }
         itemState[item.getViewIndex()] = IN_SCREEN;
     }
 
     public void onViewRemoved(AdapterViewItem item, boolean isFromAbove) {
-        if(item.getViewIndex() % columnCount == 0){
-            System.out.println("onViewRemoved " + item.getViewIndex() + " " +isFromAbove);
-        }
         if(isFromAbove){
             itemState[item.getViewIndex()] = ABOVE_SCREEN;
         }else{
@@ -131,19 +125,39 @@ public class AdapterViewManager {
     }
 
     public boolean willExceedBottom(float[] exceedAmount, View[] convertViews) {
+        if(AllNonPositive(exceedAmount)){
+            System.out.println("willExceedBottom false");
+            return false;
+        }
         for(int i = 0; i < exceedAmount.length; i++){
+            System.out.println("exceedAmount[i] " + exceedAmount[i]);
             if(exceedAmount[i] > 0){
                 AdapterViewItem item = getViewFromBelow(i, convertViews[i]);
                 convertViews[i] = null;
                 if(item == null){
-                    return true;
+                    System.out.println("item == null");
+                }else{
+                    System.out.println("item.getView().getMeasuredHeight(): "+ item.getView().getMeasuredHeight());
+                    System.out.println("exceedAmount[i]: "+ exceedAmount[i]);
                 }
-                if(item.getView().getMeasuredHeight() < exceedAmount[i]){
-                    return true;
+
+                if(item != null && item.getView().getMeasuredHeight() >= exceedAmount[i]){
+                    System.out.println("willExceedBottom false");
+                    return false;
                 }
             }
         }
-        return false;
+        System.out.println("willExceedBottom true");
+        return true;
+    }
+
+    private boolean AllNonPositive(float[] exceedAmount) {
+        for(float value : exceedAmount){
+            if(value >= 0){
+                return false;
+            }
+        }
+        return true;
     }
 
     public int getColumnMaxWidth() {

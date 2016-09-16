@@ -20,7 +20,7 @@ public class ImageAdapter extends BaseAdapter {
     }
     @Override
     public int getCount() {
-        return 5000;
+        return 33;
     }
 
     @Override
@@ -36,14 +36,12 @@ public class ImageAdapter extends BaseAdapter {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         convertView = inflator.inflate(R.layout.item_layout, null);
-        TextView textView = (TextView) convertView.findViewById(R.id.textView);
-        textView.setText(""+position);
-//        ImageView imageView = (ImageView) convertView.findViewById(R.id.imageView);
-//        if(position % 2 == 0){
-//            imageView.setImageResource(R.drawable.aa);
-//        }else{
-//            imageView.setImageResource(R.drawable.bb);
-//        }
+        ImageView imageView = (ImageView) convertView.findViewById(R.id.imageView);
+        if(position % 3 == 0){
+            imageView.setImageResource(R.drawable.aa);
+        }else{
+            imageView.setImageResource(R.drawable.bb);
+        }
 
         return convertView;
     }
