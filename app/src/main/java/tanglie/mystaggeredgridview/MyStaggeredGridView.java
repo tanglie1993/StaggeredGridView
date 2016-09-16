@@ -224,7 +224,7 @@ public class MyStaggeredGridView extends ViewGroup {
         scrollAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
-                float targetY = (velocityY / 10) * (Float) animation.getAnimatedValue() + startY;
+                float targetY = (velocityY / 6) * (Float) animation.getAnimatedValue() + startY;
                 if(!willExceedTop(targetY) && !willExceedBottom(targetY)){
                     float deltaY = targetY - lastMotionEventY;
                     currentTop = currentTop - deltaY;
