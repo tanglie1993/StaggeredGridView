@@ -116,7 +116,8 @@ public class AdapterViewManager {
         for(int i = 0; i < itemsInColumn.size(); i++){
             AdapterViewItem item = itemsInColumn.get(i);
             if(item.getItemState() == AdapterViewItem.BELOW_SCREEN){
-                return getItem(item.getViewIndex(), convertView);
+                itemsInColumn.set(i, getItem(item.getViewIndex(), convertView));
+                return itemsInColumn.get(i);
             }
         }
         while(addedViewCount < adapter.getCount()){
