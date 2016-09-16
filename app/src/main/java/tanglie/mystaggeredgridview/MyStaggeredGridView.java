@@ -81,7 +81,7 @@ public class MyStaggeredGridView extends ViewGroup {
                 if(item == null){
                     break;
                 }
-                addView(item);
+                addView(item, i % viewManager.getColumnCount());
                 tempBottom[i] += item.getView().getMeasuredHeight();
             }
         }
@@ -96,7 +96,7 @@ public class MyStaggeredGridView extends ViewGroup {
                     if(item == null){
                         break;
                     }
-                    addView(item);
+                    addView(item, i % viewManager.getColumnCount());
                     columnCurrentTop[i] -= item.getView().getMeasuredHeight();
                 }
             }
@@ -149,12 +149,12 @@ public class MyStaggeredGridView extends ViewGroup {
         }
     }
 
-    private void addView(AdapterViewItem item){
+    private void addView(AdapterViewItem item, int columnNumber){
         if(item == null){
             return;
         }
         addView(item.getView());
-        viewManager.onViewAdded(item);
+        viewManager.onViewAdded(item, columnNumber);
     }
 
     private void removeView(AdapterViewItem item, boolean isFromAbove){

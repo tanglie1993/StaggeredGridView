@@ -7,6 +7,7 @@ import android.widget.ListAdapter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -15,13 +16,9 @@ import java.util.Map;
  */
 public class AdapterViewManager {
 
-    public static final int IN_SCREEN = 1;
-    public static final int ABOVE_SCREEN = 2;
-    public static final int BELOW_SCREEN = 3;
-
     private ListAdapter adapter;
     private int columnCount = 3;
-    private int[] itemState;
+    private List<List<AdapterViewItem>> items;
 
     private int columnMaxWidth = 0;
 
@@ -29,14 +26,18 @@ public class AdapterViewManager {
 
     private ViewGroup parent;
 
+    private int addedViewCount = 0;
+
     public AdapterViewManager(ViewGroup parent) {
         this.parent = parent;
     }
 
     public void setAdapter(ListAdapter adapter) {
         this.adapter = adapter;
-        itemState = new int[adapter.getCount()];
-        Arrays.fill(itemState, BELOW_SCREEN);
+        items = new ArrayList<>();
+        for(int i = 0; i < columnCount; i++){
+            items.add(new ArrayList<AdapterViewItem>());
+        }
     }
 
     public int getColumnCount() {
@@ -44,46 +45,52 @@ public class AdapterViewManager {
     }
 
     public boolean hasItem(int columnNumber) {
-        int index = columnNumber;
-        while(index < itemState.length){
-            if(itemState[index] == IN_SCREEN){
+        for(AdapterViewItem item : items.get(columnNumber)){
+            if(item.getItemState() == AdapterViewItem.IN_SCREEN){
                 return true;
             }
-            index += columnCount;
         }
         return false;
     }
 
     public List<AdapterViewItem> getInScreenViewsInColumn(int columnNumber){
         List<AdapterViewItem> result = new ArrayList<>();
-        int index = columnNumber;
-        while(index < itemState.length){
-            if(itemState[index] == IN_SCREEN){
-                result.add(getItem(index, null));
+        for(AdapterViewItem item : items.get(columnNumber)){
+            if(item.getItemState() == AdapterViewItem.IN_SCREEN){
+                result.add(getItem(item.getViewIndex(), null));
             }
-            index += columnCount;
         }
         return result;
     }
 
-    public void onViewAdded(AdapterViewItem item) {
-        itemState[item.getViewIndex()] = IN_SCREEN;
+    public void onViewAdded(AdapterViewItem item, int columnNumber) {
+        item.setItemState(AdapterViewItem.IN_SCREEN);
+        List<AdapterViewItem> columnItems = items.get(columnNumber);
+        for(int i = 0; i < columnItems.size(); i++){
+            if(columnItems.get(i).getViewIndex() > item.getViewIndex()){
+                columnItems.add(i, item);
+                return;
+            }
+        }
+        columnItems.add(item);
     }
 
     public void onViewRemoved(AdapterViewItem item, boolean isFromAbove) {
         if(isFromAbove){
-            itemState[item.getViewIndex()] = ABOVE_SCREEN;
+            item.setItemState(AdapterViewItem.ABOVE_SCREEN);
         }else{
-            itemState[item.getViewIndex()] = BELOW_SCREEN;
+            item.setItemState(AdapterViewItem.BELOW_SCREEN);
         }
         inScreenViewMap.remove(item.getViewIndex());
     }
 
     public AdapterViewItem getViewFromAbove(int columnNumber, View convertView) {
-        for(int i = columnNumber; i < itemState.length; i+= columnCount){
-            if(itemState[i] == ABOVE_SCREEN){
-                if(i + columnCount >= itemState.length || itemState[i + columnCount] != ABOVE_SCREEN){
-                    return getItem(i, convertView);
+        List<AdapterViewItem> itemsInColumn = items.get(columnNumber);
+        for(int i = 0; i < itemsInColumn.size(); i++){
+            AdapterViewItem item = itemsInColumn.get(i);
+            if(item.getItemState() == AdapterViewItem.ABOVE_SCREEN){
+                if(i + 1 >= itemsInColumn.size() || itemsInColumn.get(i+1).getItemState() != AdapterViewItem.ABOVE_SCREEN){
+                    return getItem(item.getViewIndex(), convertView);
                 }
             }
         }
@@ -91,10 +98,17 @@ public class AdapterViewManager {
     }
 
     public AdapterViewItem getViewFromBelow(int columnNumber, View convertView) {
-        for(int i = columnNumber; i < itemState.length; i+= columnCount){
-            if(itemState[i] == BELOW_SCREEN){
-                return getItem(i, convertView);
+        List<AdapterViewItem> itemsInColumn = items.get(columnNumber);
+        for(int i = 0; i < itemsInColumn.size(); i++){
+            AdapterViewItem item = itemsInColumn.get(i);
+            if(item.getItemState() == AdapterViewItem.BELOW_SCREEN){
+                return getItem(item.getViewIndex(), convertView);
             }
+        }
+        while(addedViewCount < adapter.getCount()){
+            AdapterViewItem item = getItem(addedViewCount, convertView);
+            addedViewCount++;
+            return item;
         }
         return null;
     }
