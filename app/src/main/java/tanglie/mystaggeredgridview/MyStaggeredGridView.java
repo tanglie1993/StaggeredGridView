@@ -114,7 +114,11 @@ public class MyStaggeredGridView extends ViewGroup {
             columnCurrentBottom[i] = columnCurrentTop[i];
 
             List<AdapterViewItem> visibleViewsInColumn = viewManager.getInScreenViewsInColumn(i);
+            if(i == 0){
+                System.out.println("visibleViewsInColumn.size(): " + visibleViewsInColumn.size());
+            }
             for(AdapterViewItem item : visibleViewsInColumn){
+
                 item.getView().layout(i * viewManager.getColumnMaxWidth(), columnCurrentBottom[i] - (int) currentTop,
                         i * viewManager.getColumnMaxWidth() + item.getView().getMeasuredWidth(), columnCurrentBottom[i] + item.getView().getMeasuredHeight() - (int) currentTop);
                 columnCurrentBottom[i] += item.getView().getMeasuredHeight();
@@ -130,8 +134,16 @@ public class MyStaggeredGridView extends ViewGroup {
         for(int i = 0; i < visibleViewsInColumn.size(); i++){
             AdapterViewItem item = visibleViewsInColumn.get(i);
             if(columnCurrentTop[columnNumber] + item.getView().getMeasuredHeight() < currentTop){
+                if(columnNumber == 0){
+                    System.out.println("1: columnCurrentTop[columnNumber]: " + columnCurrentTop[columnNumber]
+                            + " currentTop: " + currentTop);
+                }
                 removeView(item, true);
                 columnCurrentTop[columnNumber] += item.getView().getMeasuredHeight();
+                if(columnNumber == 0){
+                    System.out.println("2: columnCurrentTop[columnNumber]: " + columnCurrentTop[columnNumber]
+                            + " currentTop: " + currentTop);
+                }
                 newBottomViewConvertView[columnNumber] = item.getView();
             }else{
                 break;

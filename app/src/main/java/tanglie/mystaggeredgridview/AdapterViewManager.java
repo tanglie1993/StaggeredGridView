@@ -75,13 +75,30 @@ public class AdapterViewManager {
         columnItems.add(item);
     }
 
-    public void onViewRemoved(AdapterViewItem item, boolean isFromAbove) {
+    public void onViewRemoved(AdapterViewItem itemToRemove, boolean isFromAbove) {
+        AdapterViewItem item = queryItem(itemToRemove);
+        if(item == null){
+            return;
+        }
         if(isFromAbove){
             item.setItemState(AdapterViewItem.ABOVE_SCREEN);
         }else{
             item.setItemState(AdapterViewItem.BELOW_SCREEN);
         }
         inScreenViewMap.remove(item.getViewIndex());
+
+        System.out.println("onViewRemoved: " + getInScreenViewsInColumn(0).size());
+    }
+
+    private AdapterViewItem queryItem(AdapterViewItem itemToRemove) {
+        for(List<AdapterViewItem> itemList : items){
+            for(AdapterViewItem item : itemList){
+                if(item.getViewIndex() == itemToRemove.getViewIndex()){
+                    return item;
+                }
+            }
+        }
+        return null;
     }
 
     public AdapterViewItem getViewFromAbove(int columnNumber, View convertView) {
@@ -140,7 +157,6 @@ public class AdapterViewManager {
 
     public boolean willExceedBottom(float[] exceedAmount, View[] convertViews) {
         if(negativeExists(exceedAmount)){
-            System.out.println("willExceedBottom false");
             return false;
         }
         for(int i = 0; i < exceedAmount.length; i++){
