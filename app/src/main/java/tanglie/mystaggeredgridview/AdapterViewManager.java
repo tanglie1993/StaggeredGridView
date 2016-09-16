@@ -125,7 +125,7 @@ public class AdapterViewManager {
     }
 
     public boolean willExceedBottom(float[] exceedAmount, View[] convertViews) {
-        if(AllNonPositive(exceedAmount)){
+        if(negativeExists(exceedAmount)){
             System.out.println("willExceedBottom false");
             return false;
         }
@@ -151,13 +151,13 @@ public class AdapterViewManager {
         return true;
     }
 
-    private boolean AllNonPositive(float[] exceedAmount) {
+    private boolean negativeExists(float[] exceedAmount) {
         for(float value : exceedAmount){
-            if(value >= 0){
-                return false;
+            if(value < 0){
+                return true;
             }
         }
-        return true;
+        return false;
     }
 
     public int getColumnMaxWidth() {
