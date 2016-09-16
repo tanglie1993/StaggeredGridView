@@ -44,7 +44,7 @@ public class AdapterViewManager {
         return columnCount;
     }
 
-    public boolean hasItem(int columnNumber) {
+    public boolean hasVisibleItem(int columnNumber) {
         for(AdapterViewItem item : items.get(columnNumber)){
             if(item.getItemState() == AdapterViewItem.IN_SCREEN){
                 return true;
@@ -66,13 +66,9 @@ public class AdapterViewManager {
     public void onViewAdded(AdapterViewItem item, int columnNumber) {
         item.setItemState(AdapterViewItem.IN_SCREEN);
         List<AdapterViewItem> columnItems = items.get(columnNumber);
-        for(int i = 0; i < columnItems.size(); i++){
-            if(columnItems.get(i).getViewIndex() > item.getViewIndex()){
-                columnItems.add(i, item);
-                return;
-            }
+        if(!AdapterViewItem.contains(item, columnItems)){
+            AdapterViewItem.insert(item, columnItems);
         }
-        columnItems.add(item);
     }
 
     public void onViewRemoved(AdapterViewItem itemToRemove, boolean isFromAbove) {
@@ -87,7 +83,7 @@ public class AdapterViewManager {
         }
         inScreenViewMap.remove(item.getViewIndex());
 
-        System.out.println("onViewRemoved: " + getInScreenViewsInColumn(0).size());
+        // System.out.println("onViewRemoved: " + getInScreenViewsInColumn(0).size());
     }
 
     private AdapterViewItem queryItem(AdapterViewItem itemToRemove) {
@@ -107,7 +103,8 @@ public class AdapterViewManager {
             AdapterViewItem item = itemsInColumn.get(i);
             if(item.getItemState() == AdapterViewItem.ABOVE_SCREEN){
                 if(i + 1 >= itemsInColumn.size() || itemsInColumn.get(i+1).getItemState() != AdapterViewItem.ABOVE_SCREEN){
-                    return getItem(item.getViewIndex(), convertView);
+                    itemsInColumn.set(i, getItem(item.getViewIndex(), convertView));
+                    return itemsInColumn.get(i);
                 }
             }
         }
@@ -160,24 +157,24 @@ public class AdapterViewManager {
             return false;
         }
         for(int i = 0; i < exceedAmount.length; i++){
-            System.out.println("exceedAmount[i] " + exceedAmount[i]);
+            // System.out.println("exceedAmount[i] " + exceedAmount[i]);
             if(exceedAmount[i] > 0){
                 AdapterViewItem item = getViewFromBelow(i, convertViews[i]);
                 convertViews[i] = null;
                 if(item == null){
-                    System.out.println("item == null");
+                    // System.out.println("item == null");
                 }else{
-                    System.out.println("item.getView().getMeasuredHeight(): "+ item.getView().getMeasuredHeight());
-                    System.out.println("exceedAmount[i]: "+ exceedAmount[i]);
+                    // System.out.println("item.getView().getMeasuredHeight(): "+ item.getView().getMeasuredHeight());
+                    // System.out.println("exceedAmount[i]: "+ exceedAmount[i]);
                 }
 
                 if(item != null && item.getView().getMeasuredHeight() >= exceedAmount[i]){
-                    System.out.println("willExceedBottom false");
+                    // System.out.println("willExceedBottom false");
                     return false;
                 }
             }
         }
-        System.out.println("willExceedBottom true");
+        // System.out.println("willExceedBottom true");
         return true;
     }
 

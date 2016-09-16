@@ -1,6 +1,9 @@
 package tanglie.mystaggeredgridview;
 
+import android.content.ClipData;
 import android.view.View;
+
+import java.util.List;
 
 /**
  * Created by Administrator on 2016/9/4 0004.
@@ -37,5 +40,24 @@ public class AdapterViewItem {
 
     public void setItemState(int itemState) {
         this.itemState = itemState;
+    }
+
+    public static boolean contains(AdapterViewItem item, List<AdapterViewItem> list){
+        for(AdapterViewItem listItem : list){
+            if(listItem.getViewIndex() == item.getViewIndex()){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static void insert(AdapterViewItem item, List<AdapterViewItem> columnItems) {
+        for(int i = 0; i < columnItems.size(); i++){
+            if(columnItems.get(i).getViewIndex() > item.getViewIndex()){
+                columnItems.add(i, item);
+                return;
+            }
+        }
+        columnItems.add(item);
     }
 }
